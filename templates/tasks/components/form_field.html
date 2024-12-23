@@ -1,0 +1,51 @@
+{% comment %} Create this new component for form fields {% endcomment %}
+<div class="mb-4">
+    <label class="block text-sm font-medium text-gray-700 mb-1" for="{{ id }}">
+        {{ label }}
+        {% if required %}
+            <span class="text-danger">*</span>
+        {% endif %}
+    </label>
+    
+    {% if help_text %}
+        <p class="text-xs text-gray-500 mb-1">{{ help_text }}</p>
+    {% endif %}
+    
+    {% if field_type == 'textarea' %}
+        <textarea id="{{ id }}" 
+                  name="{{ name }}" 
+                  rows="{{ rows|default:3 }}"
+                  {% if required %}required{% endif %}
+                  class="modern-input"
+                  placeholder="{{ placeholder|default:'' }}">{{ value|default:'' }}</textarea>
+    {% elif field_type == 'select' %}
+        <div class="relative">
+            <select id="{{ id }}" 
+                    name="{{ name }}"
+                    {% if required %}required{% endif %}
+                    class="modern-input appearance-none pr-8">
+                <option value="">{{ placeholder|default:'Select an option' }}</option>
+                {% for option in options %}
+                    <option value="{{ option.value }}" {% if option.value == value %}selected{% endif %}>
+                        {{ option.label }}
+                    </option>
+                {% endfor %}
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <svg class="fill-current h-4 w-4" viewBox="0 0 20 20">
+                    <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"/>
+                </svg>
+            </div>
+        </div>
+    {% else %}
+        <input type="{{ field_type|default:'text' }}"
+               id="{{ id }}"
+               name="{{ name }}"
+               value="{{ value|default:'' }}"
+               {% if min %}min="{{ min }}"{% endif %}
+               {% if max %}max="{{ max }}"{% endif %}
+               {% if required %}required{% endif %}
+               class="modern-input"
+               placeholder="{{ placeholder|default:'' }}">
+    {% endif %}
+</div> 

@@ -1,0 +1,258 @@
+{% extends 'tasks/base.html' %}
+
+{% block title %}Backlog{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Backlog</h1>
+        
+        {% if tasks %}
+            <div class="space-y-6">
+                {% for task in tasks %}
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow {% if task.is_project %}border-blue-200 bg-blue-50{% endif %}">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-grow">
+                            <h3 class="text-lg font-semibold text-gray-800">
+                                {{ task.title }}
+                                {% if task.is_project %}
+                                    <span class="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Project</span>
+                                {% endif %}
+                            </h3>
+                            
+                            <!-- Priority Score -->
+                            <div class="mt-2 flex items-center space-x-4">
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-600">Priority Score:</span>
+                                    <span class="ml-1 {% if task.priority_score > 7 %}text-green-600{% elif task.priority_score > 3 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                        {{ task.priority_score|floatformat:1 }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Cost Indicator -->
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-600">Cost:</span>
+                                    <span class="ml-1 {% if task.cost < 4 %}text-green-600{% elif task.cost < 7 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                        {{ task.cost|default:"Not set" }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Benefit Indicator -->
+                                <div class="text-sm">
+                                    <span class="font-medium text-gray-600">Benefit:</span>
+                                    <span class="ml-1 {% if task.benefit > 7 %}text-green-600{% elif task.benefit > 4 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                        {{ task.benefit|default:"Not set" }}
+                                    </span>
+                                </div>
+                                
+                                {% if task.estimated_time %}
+                                <div class="text-sm text-gray-600">
+                                    <span class="font-medium">Est. Time:</span>
+                                    <span class="ml-1">{{ task.estimated_time }} min</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if task.description %}
+                            <p class="mt-2 text-gray-600">{{ task.description }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button onclick="showEditModal('{{ task.id }}', '{{ task.title|escapejs }}', '{{ task.description|escapejs }}', '{{ task.cost }}', '{{ task.benefit }}', '{{ task.estimated_time }}')"
+                                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                                Edit
+                            </button>
+                            {% if task.is_project %}
+                            <button onclick="showSubtaskModal('{{ task.id }}', '{{ task.title|escapejs }}')"
+                                    class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+                                Add Subtask
+                            </button>
+                            {% endif %}
+                            <div class="flex space-x-2">
+                                {% if task.is_project %}
+                                    <div class="text-sm text-gray-600">
+                                        {% with progress=task.subtask_progress %}
+                                            {{ progress.0 }}/{{ progress.1 }} subtasks completed
+                                        {% endwith %}
+                                    </div>
+                                {% else %}
+                                    <form method="POST" class="inline">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="task_id" value="{{ task.id }}">
+                                        <input type="hidden" name="action" value="add_to_sprint">
+                                        <button type="submit"
+                                                class="btn btn-primary">
+                                            Add to Sprint
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if task.is_project %}
+                        <div class="mt-4 pl-6 border-l-2 border-blue-200">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="text-sm font-medium text-gray-700">Subtasks:</h4>
+                                {% with progress=task.subtask_progress %}
+                                <span class="text-sm text-gray-600">{{ progress.0 }}/{{ progress.1 }} complete</span>
+                                {% endwith %}
+                            </div>
+                            <div class="space-y-2">
+                                {% for subtask in task.subtasks.all %}
+                                <div class="flex justify-between items-center bg-white p-2 rounded border {% if subtask.status == 'done' %}bg-gray-50{% endif %}">
+                                    <span class="text-sm text-gray-800 {% if subtask.status == 'done' %}line-through text-gray-500{% endif %}">
+                                        {{ subtask.title }}
+                                    </span>
+                                    <div class="flex space-x-2">
+                                        {% if subtask.status != 'done' %}
+                                            <form method="POST" class="inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="task_id" value="{{ subtask.id }}">
+                                                <input type="hidden" name="action" value="add_to_sprint">
+                                                <button type="submit"
+                                                        class="btn btn-secondary text-sm">
+                                                    Add to Sprint
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-center py-8">No tasks in backlog.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Edit Task Modal -->
+<div id="editModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Task</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="task_id" id="editTaskId">
+            <input type="hidden" name="action" value="update">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" id="editDescription" rows="3" 
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cost (0-10)</label>
+                    <input type="number" name="cost" id="editCost" min="0" max="10" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">0: Very Easy, 10: Very Hard</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Benefit (0-10)</label>
+                    <input type="number" name="benefit" id="editBenefit" min="0" max="10"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">0: Low Value, 10: High Value</p>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Estimated Time (minutes)</label>
+                <input type="number" name="estimated_time" id="editTime" min="0"
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideEditModal()"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Update
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Subtask Modal -->
+<div id="subtaskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Add Subtask</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="parent_id" id="parentTaskId">
+            <input type="hidden" name="action" value="add_subtask">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Title</label>
+                <input type="text" name="title" required
+                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" rows="3" 
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideSubtaskModal()"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                    Add Subtask
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+function showEditModal(taskId, title, description, cost, benefit, time) {
+    document.getElementById('editTaskId').value = taskId;
+    document.getElementById('editDescription').value = description || '';
+    document.getElementById('editCost').value = cost || '';
+    document.getElementById('editBenefit').value = benefit || '';
+    document.getElementById('editTime').value = time || '';
+    document.getElementById('editModal').classList.remove('hidden');
+}
+
+function hideEditModal() {
+    document.getElementById('editModal').classList.add('hidden');
+}
+
+function showSubtaskModal(taskId, taskTitle) {
+    document.getElementById('parentTaskId').value = taskId;
+    document.getElementById('subtaskModal').classList.remove('hidden');
+}
+
+function hideSubtaskModal() {
+    document.getElementById('subtaskModal').classList.add('hidden');
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const editModal = document.getElementById('editModal');
+    const subtaskModal = document.getElementById('subtaskModal');
+    if (event.target === editModal) {
+        hideEditModal();
+    }
+    if (event.target === subtaskModal) {
+        hideSubtaskModal();
+    }
+}
+</script>
+{% endblock %}
+
+{% endblock %} 

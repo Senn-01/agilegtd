@@ -1,0 +1,206 @@
+{% extends 'tasks/base.html' %}
+
+{% block title %}History{% endblock %}
+
+{% block extra_head %}
+<!-- Add Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">History</h1>
+            <div class="flex space-x-4">
+                <!-- Time Filter -->
+                <select id="timeFilter" onchange="updateFilter(this.value)"
+                        class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="all" {% if filter == 'all' %}selected{% endif %}>All Time</option>
+                    <option value="today" {% if filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="week" {% if filter == 'week' %}selected{% endif %}>This Week</option>
+                    <option value="month" {% if filter == 'month' %}selected{% endif %}>This Month</option>
+                </select>
+                <!-- View Toggle -->
+                <div class="flex rounded-md shadow-sm">
+                    <button onclick="showTableView()"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-l hover:bg-blue-600">
+                        Table
+                    </button>
+                    <button onclick="showChartView()"
+                            class="px-4 py-2 bg-blue-500 text-white rounded-r hover:bg-blue-600">
+                        Charts
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table View -->
+        <div id="tableView" class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Benefit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Est.</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for task in tasks %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if task.is_project %}
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">Project</span>
+                            {% elif task.parent_project %}
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded">Subtask</span>
+                            {% else %}
+                                <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">Task</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {{ task.title }}
+                            {% if task.parent_project %}
+                                <span class="text-sm text-gray-500">(Part of: {{ task.parent_project.title }})</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">{{ task.cost|default:"-" }}</td>
+                        <td class="px-6 py-4">{{ task.benefit|default:"-" }}</td>
+                        <td class="px-6 py-4">{{ task.get_time_estimate_display }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ task.created_date|date:"Y-m-d H:i" }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ task.completed_date|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart View -->
+        <div id="chartView" class="hidden space-y-8">
+            {% if tasks %}
+                <!-- Tasks Completed Over Time -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Tasks Completed Over Time</h3>
+                    <canvas id="completionChart"></canvas>
+                </div>
+                
+                <!-- Cost-Benefit Analysis -->
+                <div class="bg-white p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">Cost-Benefit Analysis</h3>
+                    <canvas id="costBenefitChart"></canvas>
+                </div>
+            {% else %}
+                <p class="text-gray-600 text-center py-8">No completed tasks yet. Keep working!</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+function updateFilter(value) {
+    window.location.href = `?filter=${value}`;
+}
+
+function showTableView() {
+    document.getElementById('tableView').classList.remove('hidden');
+    document.getElementById('chartView').classList.add('hidden');
+}
+
+function showChartView() {
+    document.getElementById('tableView').classList.add('hidden');
+    document.getElementById('chartView').classList.remove('hidden');
+    initializeCharts();
+}
+
+function initializeCharts() {
+    // Parse task data from Django template
+    const tasks = {{ tasks_json|safe|default:"{}" }};
+    
+    if (!tasks.dates || tasks.dates.length === 0) {
+        return;  // No data to display
+    }
+    
+    // Completion Chart
+    const completionCtx = document.getElementById('completionChart').getContext('2d');
+    new Chart(completionCtx, {
+        type: 'line',
+        data: {
+            labels: tasks.dates,
+            datasets: [{
+                label: 'Tasks Completed',
+                data: tasks.completion_counts,
+                borderColor: 'rgb(59, 130, 246)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Number of Tasks'
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Date'
+                    }
+                }
+            }
+        }
+    });
+
+    // Cost-Benefit Chart
+    const costBenefitCtx = document.getElementById('costBenefitChart').getContext('2d');
+    new Chart(costBenefitCtx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Tasks',
+                data: tasks.map(t => ({
+                    x: t.cost,
+                    y: t.benefit,
+                    label: t.title
+                })),
+                backgroundColor: 'rgb(59, 130, 246)'
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Cost'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Benefit'
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.raw.label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}
+
+{% endblock %} 

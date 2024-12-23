@@ -1,0 +1,37 @@
+{% comment %} Create this new component file {% endcomment %}
+<div class="fixed inset-0 modal-overlay hidden z-50" id="{{ modal_id }}">
+    <div class="min-h-screen px-4 text-center">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+            <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+        </div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-middle max-w-md w-full my-8 text-left transform transition-all">
+            <div class="modern-modal">
+                <!-- Header -->
+                <div class="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">{{ title }}</h3>
+                    <button onclick="hideModal('{{ modal_id }}')" 
+                            class="text-gray-400 hover:text-gray-500 transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="p-6">
+                    {% block modal_content %}{% endblock %}
+                </div>
+
+                <!-- Footer -->
+                {% if show_footer %}
+                <div class="flex justify-end space-x-2 p-6 border-t border-gray-200 bg-gray-50">
+                    {% block modal_footer %}{% endblock %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div> 

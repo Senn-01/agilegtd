@@ -1,0 +1,259 @@
+{% extends 'tasks/base.html' %}
+
+{% block title %}Process Inbox{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-2xl font-bold text-gray-800 mb-6">Process Inbox</h1>
+        
+        {% if tasks %}
+            <div class="space-y-6">
+                {% for task in tasks %}
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg font-semibold text-gray-800">{{ task.title }}</h3>
+                        <div class="flex space-x-2">
+                            <!-- Project Classification Button -->
+                            <button onclick="showProjectModal('{{ task.id }}', '{{ task.title|escapejs }}')"
+                                    class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                                Make Project
+                            </button>
+                            <!-- Simple Task Button -->
+                            <button onclick="showTaskModal('{{ task.id }}', '{{ task.title|escapejs }}')"
+                                    class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors">
+                                Simple Task
+                            </button>
+                            <!-- Do it now Button -->
+                            <button onclick="showQuickActionModal('{{ task.id }}', '{{ task.title|escapejs }}')"
+                                    class="px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all duration-200 flex items-center space-x-1">
+                                <span>Bro, It takes only 2min...</span>
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                                </svg>
+                            </button>
+                            <!-- Delete Button -->
+                            <form method="POST" class="inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="task_id" value="{{ task.id }}">
+                                <input type="hidden" name="action" value="delete">
+                                <button type="submit"
+                                        class="px-3 py-1 bg-red-400 text-white rounded-lg hover:bg-red-500 transition-all duration-200 flex items-center space-x-1">
+                                    <span>Nah</span>
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-center py-8">No tasks in inbox. Great job!</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Project Modal -->
+<div id="projectModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Create Project</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="task_id" id="projectTaskId">
+            <input type="hidden" name="action" value="make_project">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Project Scope</label>
+                <textarea name="scope" rows="3" 
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                         placeholder="Define the scope and objectives of this project"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cost (0-10)</label>
+                    <input type="number" name="cost" min="0" max="10" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">0: Very Easy, 10: Very Hard</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Benefit (0-10)</label>
+                    <input type="number" name="benefit" min="0" max="10"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <p class="mt-1 text-xs text-gray-500">0: Low Value, 10: High Value</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Estimated Time</label>
+                    <input type="number" name="estimated_time" min="1"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Time Unit</label>
+                    <select name="time_unit"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="hours">Hours</option>
+                        <option value="days">Days</option>
+                        <option value="weeks">Weeks</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Category</label>
+                <select name="category" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Select a category</option>
+                    <option value="self_improvement">Self-Improvement</option>
+                    <option value="leisure">Leisure</option>
+                    <option value="personal_work">Personal Work</option>
+                </select>
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideProjectModal()"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                    Create Project
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Simple Task Modal -->
+<div id="taskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">Move to Backlog</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="task_id" id="simpleTaskId">
+            <input type="hidden" name="action" value="backlog">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Description</label>
+                <textarea name="description" rows="3" 
+                         class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Cost (0-10)</label>
+                    <input type="number" name="cost" min="0" max="10" 
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Benefit (0-10)</label>
+                    <input type="number" name="benefit" min="0" max="10"
+                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Category</label>
+                <select name="category" required
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Select a category</option>
+                    <option value="self_improvement">Self-Improvement</option>
+                    <option value="leisure">Leisure</option>
+                    <option value="personal_work">Personal Work</option>
+                </select>
+            </div>
+            
+            <div class="flex justify-end space-x-2">
+                <button type="button" onclick="hideTaskModal()"
+                        class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                    Move to Backlog
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Quick Action Modal -->
+<div id="quickActionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mb-4">
+            <h3 class="text-lg font-medium text-gray-900">Quick Action Task</h3>
+            <p class="mt-2 text-sm text-gray-600">
+                According to GTD, if a task takes less than 5 minutes, do it now!
+            </p>
+        </div>
+        <div class="flex justify-end space-x-2">
+            <button onclick="hideQuickActionModal()" 
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">
+                Need more time
+            </button>
+            <form method="POST" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="task_id" id="quickActionTaskId">
+                <input type="hidden" name="action" value="done">
+                <button type="submit"
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                    Done (<5min)
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% block extra_scripts %}
+<script>
+function showProjectModal(taskId, taskTitle) {
+    document.getElementById('projectTaskId').value = taskId;
+    document.getElementById('projectModal').classList.remove('hidden');
+}
+
+function hideProjectModal() {
+    document.getElementById('projectModal').classList.add('hidden');
+}
+
+function showTaskModal(taskId, taskTitle) {
+    document.getElementById('simpleTaskId').value = taskId;
+    document.getElementById('taskModal').classList.remove('hidden');
+}
+
+function hideTaskModal() {
+    document.getElementById('taskModal').classList.add('hidden');
+}
+
+function showQuickActionModal(taskId, taskTitle) {
+    document.getElementById('quickActionTaskId').value = taskId;
+    document.getElementById('quickActionModal').classList.remove('hidden');
+}
+
+function hideQuickActionModal() {
+    document.getElementById('quickActionModal').classList.add('hidden');
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const projectModal = document.getElementById('projectModal');
+    const taskModal = document.getElementById('taskModal');
+    const quickActionModal = document.getElementById('quickActionModal');
+    if (event.target === projectModal) {
+        hideProjectModal();
+    }
+    if (event.target === taskModal) {
+        hideTaskModal();
+    }
+    if (event.target === quickActionModal) {
+        hideQuickActionModal();
+    }
+}
+</script>
+{% endblock %}
+
+{% endblock %} 

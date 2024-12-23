@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agile GTD - {% block title %}{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        :root {
+            /* Primary Colors */
+            --primary: #2563EB;          /* Classic Royal Blue */
+            --primary-dark: #1E40AF;     /* Darker Blue */
+            --primary-light: #DBEAFE;    /* Light Blue Background */
+            
+            /* Secondary Colors */
+            --secondary: #4B5563;        /* Classic Gray */
+            --secondary-light: #F3F4F6;  /* Light Gray Background */
+            
+            /* Status Colors */
+            --success: #059669;          /* Forest Green */
+            --warning: #D97706;          /* Amber */
+            --danger: #DC2626;           /* Classic Red */
+            
+            /* Neutral Colors */
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-800: #1F2937;
+            
+            /* Category Colors */
+            --category-self-improvement: #2563EB;  /* Blue */
+            --category-leisure: #059669;          /* Green */
+            --category-personal-work: #4B5563;    /* Gray */
+        }
+
+        /* Update Modern Card Design */
+        .modern-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .modern-card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Update Navigation */
+        .nav-group {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 0.5rem;
+        }
+
+        .nav-link {
+            color: var(--gray-600);
+        }
+
+        .nav-link.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Update Category Pills */
+        .category-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+
+        .category-self-improvement {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary-light);
+        }
+
+        .category-leisure {
+            background: #ECFDF5;
+            color: var(--success);
+            border-color: #D1FAE5;
+        }
+
+        .category-personal-work {
+            background: var(--secondary-light);
+            color: var(--secondary);
+            border-color: var(--gray-200);
+        }
+
+        /* Update Button Styles */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary-dark);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            border-color: var(--gray-300);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+        }
+
+        /* Update Input Styles */
+        .modern-input {
+            width: 100%;
+            padding: 0.625rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--gray-300);
+            background: white;
+            color: var(--gray-800);
+            transition: all 0.2s ease;
+        }
+
+        .modern-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            outline: none;
+        }
+
+        /* Update Header */
+        .site-header {
+            background: white;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        /* Update Modal Styles */
+        .modern-modal {
+            background: white;
+            border-radius: 0.5rem;
+            border: 1px solid var(--gray-200);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        /* Modern Button Design */
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+        }
+
+        /* Modern Input Design */
+        .modern-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 2px solid var(--gray-200);
+            transition: all 0.3s ease;
+        }
+
+        .modern-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+            outline: none;
+        }
+
+        /* Category Pills */
+        .category-pill {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .category-self-improvement {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--primary);
+        }
+
+        .category-leisure {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .category-personal-work {
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--secondary);
+        }
+
+        /* Modern Modal Design */
+        .modern-modal {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .modal-overlay {
+            backdrop-filter: blur(4px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Loading States */
+        .loading-skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+            background: linear-gradient(
+                90deg,
+                var(--gray-100) 0%,
+                var(--gray-200) 50%,
+                var(--gray-100) 100%
+            );
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+
+        .fade-enter {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        .fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 300ms, transform 300ms;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+        /* Modern Custom Styles */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .hover-lift {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Modern scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a0aec0;
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+
+        /* Navigation Animations */
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: -2px;
+            left: 50%;
+            background: var(--primary);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        /* Group Transitions */
+        .nav-group {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-group:hover {
+            transform: translateY(-1px);
+        }
+        
+        /* Menu Animation */
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .menu-enter {
+            animation: slideDown 0.2s ease forwards;
+        }
+        
+        /* Page Transitions */
+        .page-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .page-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s, transform 0.3s;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <nav class="site-header fixed w-full z-50 bg-white border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <span class="text-xl font-bold text-primary">
+                        Agile GTD
+                    </span>
+                </div>
+
+                <!-- Main Navigation -->
+                <div class="hidden sm:flex sm:space-x-2 items-center">
+                    <!-- Task Management -->
+                    <div class="nav-group p-1">
+                        <a href="{% url 'landing' %}" 
+                           class="nav-link px-4 py-2 rounded-md text-sm font-medium
+                                  {% if request.resolver_match.url_name == 'landing' %}active{% endif %}">
+                            Add Task
+                        </a>
+                        <a href="{% url 'process_inbox' %}"
+                           class="nav-link px-4 py-2 rounded-md text-sm font-medium
+                                  {% if request.resolver_match.url_name == 'process_inbox' %}active{% endif %}">
+                            Process
+                        </a>
+                    </div>
+
+                    <!-- Planning -->
+                    <div class="nav-group p-1">
+                        <a href="{% url 'backlog' %}"
+                           class="nav-link px-4 py-2 rounded-md text-sm font-medium
+                                  {% if request.resolver_match.url_name == 'backlog' %}active{% endif %}">
+                            Backlog
+                        </a>
+                        <a href="{% url 'sprint' %}"
+                           class="nav-link px-4 py-2 rounded-md text-sm font-medium
+                                  {% if request.resolver_match.url_name == 'sprint' %}active{% endif %}">
+                            Sprint
+                        </a>
+                    </div>
+
+                    <!-- Review -->
+                    <div class="nav-group p-1">
+                        <a href="{% url 'retrospective' %}"
+                           class="nav-link px-4 py-2 rounded-md text-sm font-medium
+                                  {% if request.resolver_match.url_name == 'retrospective' %}active{% endif %}">
+                            Retro
+                        </a>
+                        <a href="{% url 'history' %}"
+                           class="nav-link px-4 py-2 rounded-md text-sm font-medium
+                                  {% if request.resolver_match.url_name == 'history' %}active{% endif %}">
+                            History
+                        </a>
+                    </div>
+                </div>
+
+                <!-- User Menu -->
+                <div class="flex items-center">
+                    {% if user.is_authenticated %}
+                        <div class="relative">
+                            <button type="button" 
+                                    onclick="toggleUserMenu()"
+                                    class="btn btn-secondary">
+                                <span>{{ user.username }}</span>
+                                <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                            <!-- Dropdown -->
+                            <div id="userMenu" 
+                                 class="hidden absolute right-0 mt-2 w-48 modern-card">
+                                <a href="{% url 'logout' %}" 
+                                   class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    Logout
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a href="{% url 'login' %}" 
+                           class="btn btn-primary">
+                            Login
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% include 'tasks/components/messages.html' %}
+
+    <div class="container mx-auto px-4 py-8">
+        <div class="pt-16">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add page transition class
+        document.querySelector('.container').classList.add('page-enter');
+        requestAnimationFrame(() => {
+            document.querySelector('.container').classList.add('page-enter-active');
+        });
+        
+        // Menu animations
+        function toggleUserMenu() {
+            const menu = document.getElementById('userMenu');
+            menu.classList.toggle('hidden');
+            if (!menu.classList.contains('hidden')) {
+                menu.classList.add('menu-enter');
+            }
+        }
+        
+        // Navigation group hover effect
+        const navGroups = document.querySelectorAll('.nav-group');
+        navGroups.forEach(group => {
+            group.addEventListener('mouseenter', () => {
+                group.querySelectorAll('.nav-link').forEach(link => {
+                    if (!link.classList.contains('active')) {
+                        link.style.opacity = '0.7';
+                    }
+                });
+            });
+            
+            group.addEventListener('mouseleave', () => {
+                group.querySelectorAll('.nav-link').forEach(link => {
+                    link.style.opacity = '1';
+                });
+            });
+        });
+    });
+    </script>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html> 

@@ -1,0 +1,83 @@
+<div class="modern-card p-4 {% if task.is_project %}border-l-4 border-primary{% endif %}">
+    <div class="flex justify-between items-start">
+        <div class="space-y-2">
+            <div class="flex items-center space-x-2">
+                <h3 class="font-medium text-gray-800">{{ task.title }}</h3>
+                {% if task.is_project %}
+                    <span class="category-pill bg-primary-light text-primary">Project</span>
+                {% endif %}
+                <span class="category-pill category-{{ task.category }}">
+                    {{ task.get_category_display }}
+                </span>
+            </div>
+
+            <div class="flex items-center space-x-4 text-sm">
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-600">Priority:</span>
+                    <span class="font-medium {% if task.priority_score > 7 %}text-success{% elif task.priority_score > 3 %}text-warning{% else %}text-danger{% endif %}">
+                        {{ task.priority_score|floatformat:1 }}
+                    </span>
+                </div>
+                {% if task.estimated_time %}
+                    <div class="flex items-center space-x-1">
+                        <span class="text-gray-600">Time:</span>
+                        <span class="font-medium text-gray-700">{{ task.get_time_estimate_display }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            {% if task.scope %}
+                <p class="text-sm text-gray-600">{{ task.scope }}</p>
+            {% endif %}
+        </div>
+
+        <div class="flex items-start space-x-2">
+            {% block action_buttons %}{% endblock %}
+        </div>
+    </div>
+
+    {% if task.is_project %}
+        <div class="mt-4 border-t border-gray-100 pt-4">
+            {% with progress=task.subtask_progress %}
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <h4 class="text-sm font-medium text-gray-700">Progress</h4>
+                        <span class="text-sm text-gray-500">
+                            {{ progress.0 }}/{{ progress.1 }} tasks completed
+                        </span>
+                    </div>
+                    <span class="text-sm font-medium {% if progress.0 == progress.1 %}text-success{% else %}text-gray-600{% endif %}">
+                        {% widthratio progress.0 progress.1 100 %}%
+                    </span>
+                </div>
+                <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-primary transition-all duration-500"
+                         style="width: {% widthratio progress.0 progress.1 100 %}%">
+                    </div>
+                </div>
+            {% endwith %}
+
+            {% if task.subtasks.exists %}
+                <div class="mt-4 space-y-2">
+                    {% for subtask in task.subtasks.all %}
+                        <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                            <span class="text-sm {% if subtask.status == 'done' %}text-gray-400 line-through{% else %}text-gray-700{% endif %}">
+                                {{ subtask.title }}
+                            </span>
+                            {% if subtask.status != 'done' %}
+                                <form method="POST" class="inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="task_id" value="{{ subtask.id }}">
+                                    <input type="hidden" name="action" value="add_to_sprint">
+                                    <button type="submit" class="btn btn-secondary text-sm">
+                                        Add to Sprint
+                                    </button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    {% endif %}
+</div> 
