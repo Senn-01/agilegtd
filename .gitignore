@@ -41,3 +41,13 @@ media/
 # OS
 .DS_Store
 Thumbs.db 
+
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+/media/
+/staticfiles/
+/venv/
+*.log
+*.env
