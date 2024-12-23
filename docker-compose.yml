@@ -1,26 +1,45 @@
-version: '3.8'
+# Comments are provided throughout this file to help you get started.
+# If you need more help, visit the Docker Compose reference guide at
+# https://docs.docker.com/go/compose-spec-reference/
 
+# Here the instructions define your application as a service called "server".
+# This service is built from the Dockerfile in the current directory.
+# You can add other services your application may depend on here, such as a
+# database or a cache. For examples, see the Awesome Compose repository:
+# https://github.com/docker/awesome-compose
 services:
   web:
-    build: .
-    command: gunicorn agilegtd.wsgi:application --bind 0.0.0.0:8000
-    volumes:
-      - .:/app
+    build:
+      context: .
     ports:
       - "8000:8000"
-    env_file:
-      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=agilegtd.settings.production
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
     depends_on:
-      - db
-  
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - static_data:/app/staticfiles
+
   db:
-    image: postgres:13
+    image: postgres:15
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_DB=${DB_NAME}
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
 
 volumes:
-  postgres_data: 
+  postgres_data:
+  static_data:
+
